@@ -1,0 +1,25 @@
+{
+  "name": "workspace",
+  "version": "0.0.0",
+  "license": "MIT",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*",
+    "scripts"
+  ],
+  "scripts": {
+    "dev": "concurrently -n api,web -c blue,green \"npm run dev -w @workspace/api-server\" \"npm run dev -w @workspace/savora\"",
+    "format": "prettier --write .",
+    "build": "npm run typecheck && npm run build --workspaces --if-present",
+    "typecheck:libs": "tsc --build",
+    "typecheck": "npm run typecheck:libs && npm run typecheck --workspace=apps/api-server --workspace=apps/savora --workspace=scripts --if-present",
+    "test": "npm run test -w @workspace/api-server && npm run test -w @workspace/savora"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "prettier": "^3.9.4",
+    "typescript": "~5.9.3"
+  }
+}

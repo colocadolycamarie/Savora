@@ -1,0 +1,18 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "incremental": true,
+    "tsBuildInfoFile": ".tsbuildinfo",
+    "outDir": "dist",
+    "types": ["node"]
+  },
+  "include": ["src", "tests", "vitest.config.ts"],
+  "references": [
+    {
+      "path": "../../packages/api-zod"
+    },
+    {
+      "path": "../../packages/db"
+    }
+  ]
+}

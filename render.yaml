@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: savora-api
+    runtime: node
+    plan: free
+    region: singapore
+    buildCommand: npm install && npm run build -w @workspace/api-server
+    startCommand: npm run start -w @workspace/api-server
+    envVars:
+      - key: DATABASE_URL
+        sync: false

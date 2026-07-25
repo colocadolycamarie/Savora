@@ -1,0 +1,345 @@
+openapi: 3.1.0
+# Do not change the title, if the title changes, the import paths will be broken
+info:
+  title: Api
+  version: 0.1.0
+  description: API specification
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: reservations
+    description: Table reservation operations
+  - name: gift-cards
+    description: Gift card purchase operations
+  - name: contact
+    description: Contact form operations
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        '200':
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthStatus'
+
+  /availability:
+    get:
+      operationId: getAvailability
+      tags: [reservations]
+      summary: Check table availability
+      description: Returns remaining capacity for a given date, time, and party size
+      parameters:
+        - name: date
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: time
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: '^([01]\d|2[0-3]):[0-5]\d$'
+        - name: guests
+          in: query
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 20
+      responses:
+        '200':
+          description: Availability for the requested slot
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AvailabilityResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+
+  /reservations:
+    post:
+      operationId: createReservation
+      tags: [reservations]
+      summary: Create a reservation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReservationRequest'
+      responses:
+        '201':
+          description: Reservation created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReservationResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '409':
+          description: The requested slot is fully booked
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /gift-cards:
+    post:
+      operationId: createGiftCard
+      tags: [gift-cards]
+      summary: Purchase a gift card
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GiftCardRequest'
+      responses:
+        '201':
+          description: Gift card created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GiftCardResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+
+  /contact:
+    post:
+      operationId: createContactMessage
+      tags: [contact]
+      summary: Submit a contact form message
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContactRequest'
+      responses:
+        '201':
+          description: Message received
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContactResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+
+components:
+  responses:
+    ValidationError:
+      description: The request failed validation
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        fields:
+          type: object
+          additionalProperties:
+            type: string
+      required:
+        - error
+
+    AvailabilityLevel:
+      type: string
+      enum: [available, limited, full]
+
+    AvailabilityResponse:
+      type: object
+      properties:
+        level:
+          $ref: '#/components/schemas/AvailabilityLevel'
+        remainingSeats:
+          type: integer
+        capacity:
+          type: integer
+      required: [level, remainingSeats, capacity]
+
+    ReservationRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 2
+          maxLength: 120
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+          minLength: 7
+          maxLength: 20
+        date:
+          type: string
+          format: date
+        time:
+          type: string
+          pattern: '^([01]\d|2[0-3]):[0-5]\d$'
+        guests:
+          type: integer
+          minimum: 1
+          maximum: 20
+        dietaryNotes:
+          type: string
+          maxLength: 500
+      required: [name, email, phone, date, time, guests]
+
+    ReservationResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        confirmationCode:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        date:
+          type: string
+        time:
+          type: string
+        guests:
+          type: integer
+        dietaryNotes:
+          type: string
+          nullable: true
+        depositRequired:
+          type: boolean
+        depositAmount:
+          type: integer
+        status:
+          type: string
+        createdAt:
+          type: string
+      required:
+        - id
+        - confirmationCode
+        - name
+        - email
+        - phone
+        - date
+        - time
+        - guests
+        - depositRequired
+        - depositAmount
+        - status
+        - createdAt
+
+    GiftCardRequest:
+      type: object
+      properties:
+        amount:
+          type: integer
+          minimum: 500
+          maximum: 50000
+        recipientType:
+          type: string
+          enum: [myself, gift]
+        deliveryMethod:
+          type: string
+          enum: [email, physical]
+        recipientName:
+          type: string
+          maxLength: 120
+        recipientEmail:
+          type: string
+          format: email
+        mailingAddress:
+          type: string
+          maxLength: 500
+        senderName:
+          type: string
+          minLength: 2
+          maxLength: 120
+        senderEmail:
+          type: string
+          format: email
+        message:
+          type: string
+          maxLength: 200
+      required: [amount, recipientType, deliveryMethod, senderName, senderEmail]
+
+    GiftCardResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        code:
+          type: string
+        amount:
+          type: integer
+        recipientType:
+          type: string
+        deliveryMethod:
+          type: string
+        status:
+          type: string
+        createdAt:
+          type: string
+      required:
+        - id
+        - code
+        - amount
+        - recipientType
+        - deliveryMethod
+        - status
+        - createdAt
+
+    ContactRequest:
+      type: object
+      properties:
+        subject:
+          type: string
+          enum: [general, private, press, careers]
+        name:
+          type: string
+          minLength: 2
+          maxLength: 120
+        email:
+          type: string
+          format: email
+        message:
+          type: string
+          minLength: 10
+          maxLength: 2000
+      required: [subject, name, email, message]
+
+    ContactResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        status:
+          type: string
+        createdAt:
+          type: string
+      required: [id, status, createdAt]
