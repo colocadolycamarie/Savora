@@ -4,6 +4,14 @@
   "installCommand": "npm install --include=dev",
   "outputDirectory": "apps/savora/dist/public",
   "framework": "vite",
+  "env": {
+    "NPM_CONFIG_PRODUCTION": "false"
+  },
+  "build": {
+    "env": {
+      "NPM_CONFIG_PRODUCTION": "false"
+    }
+  },
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
   ]
